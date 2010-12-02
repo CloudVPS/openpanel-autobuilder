@@ -4,8 +4,8 @@ from build import Build;
 import re
 
 	
-b = Build( "http://hg.openpanel.com/opencli" );
-b.GenerateChangelog( )
-b.CleanUp();
+b = Build( "http://hg.openpanel.com/opencli" )
+b.BumpVersion()
+b.CleanUp()
 
 

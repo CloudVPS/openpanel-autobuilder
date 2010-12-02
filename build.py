@@ -7,6 +7,7 @@ import re
 from xml.dom import minidom  
 import xml.etree.ElementTree as ET
 from mx.DateTime.ISO import ParseDateTimeUTC
+import mx.DateTime
 from datetime import datetime
 from collections import defaultdict
 
@@ -62,13 +63,6 @@ class Build:
 		self.Clone()
 		sourcename = self.GetSourceName()
 
-		lastversion = '0'
-		
-		with open( self.tmpdir + "/hg/debian/changelog") as f:
-			match = Build.findversion.search( f.read() )
-			if match:
-				lastversion = match.group("version")
-
 		# Request the changelog from mercurial
 		c = subprocess.Popen( ["/usr/bin/hg", "log", "--style=xml"], cwd=self.tmpdir + "/hg" , stdout=subprocess.PIPE)
 		xmllog = c.communicate()[0]
@@ -85,8 +79,6 @@ class Build:
 			if logentry.find("tag") != None:
 
 				version = logentry.find("tag").text
-				if version != 'tip' and version > lastversion:
-					lastversion = version
 				
 				currentversion = versions[version]
 				currentversion.sourcename = sourcename
@@ -107,19 +99,8 @@ class Build:
 				# this is a regular changelog item. Add it to the message
 				currentversion.messages.append( msg )
 				
-		# give tip a special version
-		# substitute 'tip' for last version with patchno incremented
-		if 'tip' in versions:
-			major,minor,patch = lastversion.split('.')
-
-			# strip the build until the first non-numeric char		
-			for i in range(0,len(patch)-1):
-				if not patch[i].isdigit():
-					patch = patch[0:i]
-
-			versions['tip'].description = major + "." + minor + "." + str(long(patch)+1)
-
 		return versions
+
 		
 	def NeedsBuild( self ):
 		changes = self.GenerateChangelog()
@@ -132,7 +113,6 @@ class Build:
             
 
 class ChangelogVersion:
-	isTip = False
 	description = ""
 	messages = None
 	date = None
@@ -152,14 +132,14 @@ class ChangelogVersion:
 		result = "%s (%s) %s; urgency=%s\n" % (self.sourcename, self.description, distributions, urgency)
 		
 		for msg in self.messages:
-			newmsg = _rewriteEntry(msg)
+			newmsg = self._rewriteEntry(msg)
 			if newmsg:
 				result += "  * %s\n" % newmsg.replace("\n","\n    ")
 			
 		result += "-- %s %s\n\n" % ( overrideauthor or self.author, self.date.strftime("%a, %d %B %Y %H:%M:%S %z") )
 		return result
 
-	def _rewriteEntry( msg ):
+	def _rewriteEntry( self, msg ):
 		''' helper function to rewrite the log message to be used in a debian changelog '''
 		# Drop short one-word messages
 		if _regex_short_message.match( msg ):
