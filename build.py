@@ -100,7 +100,58 @@ class Build:
 				currentversion.messages.append( msg )
 				
 		return versions
+		
+		
+	def BumpVersion( self, rewrite_changelog=False ):
+		versions = self.GenerateChangelog()
+		
+		# determine last version in changelog
+		lastchangelogversion = '0.0.0'
+		
+		tail = ''
+		try:
+			with open( self.tmpdir + "/hg/debian/changelog") as f:
+				tail = f.read()
+				match = Build.findversion.search( tail )
+				if match:
+					lastchangelogversion = match.group("version")
+		except:
+			pass
+			
+		# determine last version in HG
+		lastversion = lastchangelogversion
+		
+		for version in versions:
+			if version > lastversion and version != 'tip':
+				lastversion = version
 
+		major,minor,patch = lastversion.split('.')
+		# strip the build until the first non-numeric char		
+		for i in range(0,len(patch)-1):
+			if not patch[i].isdigit():
+				patch = patch[0:i]
+
+		newver = major + "." + minor + "." + str(long(patch)+1)
+		
+		if 'tip' in versions:
+			versions['tip'].description = newver
+			versions[newver] = versions['tip']
+			del versions['tip']
+		else:
+			version[newver].description = newver
+			version[newver].date = DateTime.now()
+			version[newver].author = "OpenPanel packager <packages@openpanel.com>"
+			version[newver].sourcename = self.GetSourceName()
+
+		with open( self.tmpdir + "/hg/debian/changelog", 'w') as f:
+			for version in sorted( versions, reverse=True ):
+				if version > lastchangelogversion:
+					f.write( versions[version].GetDebianFormatted() )
+			f.write(tail)
+			
+		# perform the checkout
+		c = subprocess.Popen( ["/usr/bin/hg", "tag", newver], cwd=self.tmpdir + "/hg")
+		c.wait()
 		
 	def NeedsBuild( self ):
 		changes = self.GenerateChangelog()
