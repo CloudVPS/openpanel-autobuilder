@@ -157,7 +157,19 @@ class Build:
 		changes = self.GenerateChangelog()
 		return ('tip' in changes) and changes['tip'].HasChanges()
 							
-            
+	def Build( self ):
+		self.BumpVersion()
+		c = subprocess.Popen( 
+			["dpkg-buildpackage", 
+				"-S", # Source build
+				"-i", # use default file ignores
+				"-I", # use default dir ignores
+				"-d"  # ignore build-dependencies
+			], cwd=self.tmpdir + "/hg")
+		c.wait()
+		
+		
+
 
 class ChangelogVersion:
 	description = ""
