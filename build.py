@@ -125,27 +125,11 @@ class Build:
 		changes = self.GenerateChangelog()
 		return ('tip' in changes) and changes['tip'].HasChanges()
 							
-
-	def _xmltext( nodelist ):
-		''' Helper function to get the concatenated text of a node or nodelist '''
-		rc = []
-	
-		todo = [nodelist]
-	
-		while todo:
-			node = todo.pop()
-		
-			if isinstance(node, minidom.NodeList):
-				for subnode in node:
-					todo.append(subnode)
-			elif node.nodeType == node.ELEMENT_NODE:
-				for subnode in node.childNodes:
-					todo.append(subnode)
-			elif node.nodeType == node.TEXT_NODE:
-				rc.append(node.data)
-				
-		return ''.join(rc)
-
+	def Build( self ):
+		self.Clone()
+		# perform a source build
+		subprocess.check_call( ["/usr/bin/dpkg-buildpackage", "-S", "-d" "-i", "-I"], cwd=self.tmpdir + "/hg" )
+            
 
 class ChangelogVersion:
 	isTip = False
