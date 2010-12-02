@@ -5,7 +5,7 @@ import re
 
 	
 b = Build( "http://hg.openpanel.com/opencli" )
-b.BumpVersion( ) 
+b.Build( ) 
 b.CleanUp()
 
 

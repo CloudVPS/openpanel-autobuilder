@@ -46,7 +46,7 @@ class Build:
 			os.mkdir( self.tmpdir + "/hg" )
 			
 			# perform the checkout
-			subprocess.check_call( ["/usr/bin/hg", "clone", self.hgurl, self.tmpdir + "/hg"] )
+			subprocess.check_call( ["hg", "clone", self.hgurl, self.tmpdir + "/hg"] )
 
 			
 	def GetSourceName( self ):
@@ -64,7 +64,7 @@ class Build:
 		sourcename = self.GetSourceName()
 
 		# Request the changelog from mercurial
-		c = subprocess.Popen( ["/usr/bin/hg", "log", "--style=xml"], cwd=self.tmpdir + "/hg" , stdout=subprocess.PIPE)
+		c = subprocess.Popen( ["hg", "log", "--style=xml"], cwd=self.tmpdir + "/hg" , stdout=subprocess.PIPE)
 		xmllog = c.communicate()[0]
 		etlog = ET.fromstring( xmllog )
 		
@@ -150,7 +150,7 @@ class Build:
 			f.write(tail)
 			
 		# perform the checkout
-		c = subprocess.Popen( ["/usr/bin/hg", "tag", newver], cwd=self.tmpdir + "/hg")
+		c = subprocess.Popen( ["hg", "tag", newver], cwd=self.tmpdir + "/hg")
 		c.wait()
 		
 	def NeedsBuild( self ):
