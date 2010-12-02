@@ -138,7 +138,7 @@ class ChangelogVersion:
 	date = None
 	sourcename = None
 	author = None
-	
+
 	
 	def __init__(self):
 		self.messages = []
@@ -158,19 +158,20 @@ class ChangelogVersion:
 			
 		result += "-- %s %s\n\n" % ( overrideauthor or self.author, self.date.strftime("%a, %d %B %Y %H:%M:%S %z") )
 		return result
+		
 
 	def _rewriteEntry( msg ):
 		''' helper function to rewrite the log message to be used in a debian changelog '''
 		# Drop short one-word messages
 		if _regex_short_message.match( msg ):
-			return "";
+			return ""
 	
 		# remove bug references, as they could interfere with the debiab BTS
 		msg = _regex_bt_ref.sub( "", msg )
 		# style: remove trailing period
 		msg = _regex_trailing_period.sub( "", msg )
 	
-		return msg;
+		return msg
 
 
 _regex_tagging_message = re.compile("Added tag (?P<version>.*) for changeset [a-z0-9]{12}")
