@@ -195,7 +195,7 @@ class ChangelogVersion:
 			if newmsg:
 				result += "  * %s\n" % newmsg.replace("\n","\n    ")
 			
-		result += "-- %s %s\n\n" % ( overrideauthor or self.author, self.date.strftime("%a, %d %B %Y %H:%M:%S %z") )
+		result += " -- %s  %s\n\n" % ( overrideauthor or self.author, self.date.strftime("%a, %d %B %Y %H:%M:%S %z") )
 		return result
 		
 
