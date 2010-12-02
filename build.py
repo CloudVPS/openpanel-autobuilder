@@ -106,10 +106,6 @@ class Build:
 		changes = self.GenerateChangelog()
 		return ('tip' in changes) and changes['tip'].HasChanges()
 							
-	def Build( self ):
-		self.Clone()
-		# perform a source build
-		subprocess.check_call( ["/usr/bin/dpkg-buildpackage", "-S", "-d" "-i", "-I"], cwd=self.tmpdir + "/hg" )
             
 
 class ChangelogVersion:
