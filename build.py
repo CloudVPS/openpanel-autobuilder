@@ -153,19 +153,32 @@ class Build:
 		c = subprocess.Popen( ["hg", "tag", newver], cwd=self.tmpdir + "/hg")
 		c.wait()
 		
+		return newver
+		
+		
 	def NeedsBuild( self ):
 		changes = self.GenerateChangelog()
 		return ('tip' in changes) and changes['tip'].HasChanges()
 							
-	def Build( self ):
-		self.BumpVersion()
+							
+	def BuildSource( self ):
+		newver = self.BumpVersion()
 		c = subprocess.Popen( 
 			["dpkg-buildpackage", 
 				"-S", # Source build
 				"-i", # use default file ignores
 				"-I", # use default dir ignores
-				"-d"  # ignore build-dependencies
-			], cwd=self.tmpdir + "/hg")
+				"-d",  # ignore build-dependencies
+				"-k4EAC69B9",  # use gpg key for OpenPanel packager <packages@openpanel.com>
+				"-epackages@openpanel.com",
+			], 
+			env={
+				"PATH": os.environ['PATH'],
+				"HOME": os.environ['HOME'],
+				"DEBFULLNAME": "OpenPanel packager",
+				"DEBEMAIL": "packages@openpanel.com",
+			},
+			cwd=self.tmpdir + "/hg")
 		c.wait()
 		
 		
