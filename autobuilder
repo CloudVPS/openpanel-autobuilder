@@ -5,7 +5,7 @@ import re
 
 	
 b = Build( "http://hg.openpanel.com/opencli" )
-b.Build( ) 
+b.Build( "maverick", "amd64") 
 b.CleanUp()
 
 

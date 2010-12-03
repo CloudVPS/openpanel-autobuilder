@@ -16,11 +16,13 @@ class Build:
 	findsource = re.compile('^Source:\s*(?P<sourcename>.*)$', re.IGNORECASE | re.MULTILINE)
 	findversion = re.compile('^[-a-z0-9]+ \s+ \( (?P<version> [^)]+ ) \)', re.IGNORECASE | re.X)
 
+
 	def __init__( self, hgurl ):
 		self.hgurl = hgurl
 		self.tmpdir = None
 		self.sourcename = None
 		self.version = None
+		self.dscpath = None
 
 	
 	def __del__( self ):
@@ -32,6 +34,7 @@ class Build:
 		if self.tmpdir:
 			shutil.rmtree( self.tmpdir )
 			self.tmpdir = None
+			
 
 	def Clone( self, force = False ):
 		''' Create a hg checkout in a temporary folder, if none is available or force '''
@@ -51,7 +54,7 @@ class Build:
 			
 	def GetSourceName( self ):
 		''' Determine the name for the source package, and return it '''
-		if self.sourcename == None:
+		if not self.sourcename:
 			self.Clone()
 			with open( self.tmpdir + "/hg/debian/control") as f:
 				match = Build.findsource.search( f.read() )
@@ -162,27 +165,41 @@ class Build:
 							
 							
 	def BuildSource( self ):
-		newver = self.BumpVersion()
-		c = subprocess.Popen( 
-			["dpkg-buildpackage", 
-				"-S", # Source build
-				"-i", # use default file ignores
-				"-I", # use default dir ignores
-				"-d",  # ignore build-dependencies
-				"-k4EAC69B9",  # use gpg key for OpenPanel packager <packages@openpanel.com>
-				"-epackages@openpanel.com",
-			], 
-			env={
-				"PATH": os.environ['PATH'],
-				"HOME": os.environ['HOME'],
-				"DEBFULLNAME": "OpenPanel packager",
-				"DEBEMAIL": "packages@openpanel.com",
-			},
-			cwd=self.tmpdir + "/hg")
-		c.wait()
-		
-		
+		if not self.dscpath:
+			newver = self.BumpVersion()
+			c = subprocess.Popen( 
+				["dpkg-buildpackage", 
+					"-S", # Source build
+					"-i", # use default file ignores
+					"-I", # use default dir ignores
+					"-d",  # ignore build-dependencies
+					"-k4EAC69B9",  # use gpg key for OpenPanel packager <packages@openpanel.com>
+					"-epackages@openpanel.com",
+				], 
+				env={
+					"PATH": os.environ['PATH'],
+					"HOME": os.environ['HOME'],
+					"DEBFULLNAME": "OpenPanel packager",
+					"DEBEMAIL": "packages@openpanel.com",
+				},
+				cwd=self.tmpdir + "/hg")
+			c.wait()
+			self.dscpath = "%s/%s_%s.dsc" % (self.tmpdir, self.GetSourceName(), newver)
+			
+		return self.dscpath
+	
+	def Build( self, distribution, architecture ):
+		dscpath = self.BuildSource()
 
+		c = subprocess.Popen( 
+			["pbuilder", 
+				"build",
+				"--basetgz","/var/cache/pbuilder/%s-%s.tgz" % (distribution,architecture) ,
+				dscpath
+			])
+		c.wait()
+
+	def AddToRepro( self, repropath, architecture, distribution, 
 
 class ChangelogVersion:
 	description = ""
