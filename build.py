@@ -13,6 +13,8 @@ import mx.DateTime
 
 from collections import defaultdict
 
+import build # import self. Need this to determine own path
+
 class Build:
 	tmpbasedir="/tmp/"
 	findsource = re.compile('^Source:\s*(?P<sourcename>.*)$', re.IGNORECASE | re.MULTILINE)
@@ -65,9 +67,12 @@ class Build:
 		self.Clone()
 		sourcename = self.GetSourceName()
 
+		stylepath = os.path.join( os.path.dirname(build.__file__) , "mercurial_xml_style" )
+
 		# Request the changelog from mercurial
-		c = subprocess.Popen( ["hg", "log", "--style=xml"], cwd=self.tmpdir + "/hg" , stdout=subprocess.PIPE)
+		c = subprocess.Popen( ["hg", "log", "--style", stylepath], cwd=self.tmpdir + "/hg" , stdout=subprocess.PIPE)
 		xmllog = c.communicate()[0]
+		
 		etlog = ET.fromstring( xmllog )
 		
 		tagend=None
