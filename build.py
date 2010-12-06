@@ -72,6 +72,10 @@ class Build:
 		# Request the changelog from mercurial
 		c = subprocess.Popen( ["hg", "log", "--style", stylepath], cwd=self.tmpdir + "/hg" , stdout=subprocess.PIPE)
 		xmllog = c.communicate()[0]
+
+		# work around a bug in mercurial 1.0.1, which ignores the footer declaration from the style
+		if xmllog.find( "</log>" ) == -1:
+			xmllog += "</log>"
 		
 		etlog = ET.fromstring( xmllog )
 		
