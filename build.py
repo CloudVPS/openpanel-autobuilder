@@ -47,9 +47,6 @@ class Build:
 			# find a nice place to put everything
 			self.tmpdir = tempfile.mkdtemp( dir=self.tmpbasedir, prefix="bld" )
 
-			# work in a subdirectory, because dpkg-buildpackage will put their results one dir below.
-			os.mkdir( self.tmpdir + "/hg" )
-			
 			# perform the checkout
 			subprocess.check_call( ["hg", "clone", self.hgurl, self.tmpdir + "/hg"] )
 
