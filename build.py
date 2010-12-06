@@ -1,14 +1,16 @@
+from __future__ import with_statement # for python 2.5 compat
 
-import tempfile
-import shutil
 import os
-import subprocess
 import re
-from xml.dom import minidom  
-import xml.etree.ElementTree as ET
+import subprocess
+
+import shutil
+import tempfile # Building is done in a temporary folder
+import xml.etree.ElementTree as ET # to parse hg log output
+
 from mx.DateTime.ISO import ParseDateTimeUTC
 import mx.DateTime
-from datetime import datetime
+
 from collections import defaultdict
 
 class Build:
@@ -198,8 +200,6 @@ class Build:
 				dscpath
 			])
 		c.wait()
-
-	def AddToRepro( self, repropath, architecture, distribution, 
 
 class ChangelogVersion:
 	description = ""
