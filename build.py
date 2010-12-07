@@ -136,13 +136,22 @@ class Build:
 			if version > lastversion and version != 'tip':
 				lastversion = version
 
-		major,minor,patch = lastversion.split('.')
-		# strip the build until the first non-numeric char		
-		for i in range(0,len(patch)-1):
-			if not patch[i].isdigit():
-				patch = patch[0:i]
+		vsplit = lastversion.split('.',3)
+		if len(vsplit) == 2:
+			major,minor = vsplit
+			patch = 0
+		else:
+			major,minor,patch = vsplit
+		
+			# strip the build until the first non-numeric char		
+			for i in range(0,len(patch)-1):
+				if not patch[i].isdigit():
+					patch = patch[0:i]
+					
+			patch = long(patch)+1
+			
 
-		newver = major + "." + minor + "." + str(long(patch)+1)
+		newver = major + "." + minor + "." + str(patch)
 		
 		if 'tip' in versions:
 			versions['tip'].description = newver
