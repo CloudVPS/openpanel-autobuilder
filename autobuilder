@@ -3,9 +3,13 @@
 from build import Build;
 import re
 
+for package in ["grace","opencore","opencli","opencore-ssl","openpanel-gui","User.module"]:
+
+	b = Build( "http://hg.openpanel.com/" + package )
 	
-b = Build( "http://hg.openpanel.com/opencli" )
-b.Build( "maverick", "amd64") 
-b.CleanUp()
-
-
+	for dist in ["lenny","squeeze","lucid"]:
+		for arch in ["amd64","i386"]:
+			b.Build( dist, arch )
+			
+	b.CleanUp()
+			
