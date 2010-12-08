@@ -10,10 +10,13 @@ import xml.etree.ElementTree as ET # to parse hg log output
 
 from mx.DateTime.ISO import ParseDateTimeUTC
 import mx.DateTime
+from mx.Tools import verscmp
 
 from collections import defaultdict
 
 import build # import self. Need this to determine own path
+import codecs
+
 
 class Build:
 	tmpbasedir="/tmp/"
@@ -24,13 +27,14 @@ class Build:
 	tmpdir = None # Build location
 	sourcename = None # Name of the source package
 	version = None
-	versions = None
 	dscpath = None
 	lasttag = None
 	buildtag = None
+	targetdistribution = None
 
-	def __init__( self, hgurl ):
+	def __init__( self, hgurl, targetdistribution ):
 		self.hgurl = hgurl
+		self.targetdistribution = targetdistribution
 
 	
 	def __del__( self ):
@@ -40,7 +44,7 @@ class Build:
 	def CleanUp( self ):
 		# remove the tmp directory
 		if self.tmpdir:
-			#shutil.rmtree( self.tmpdir )
+			shutil.rmtree( self.tmpdir )
 			self.tmpdir = None
 			
 
@@ -54,7 +58,6 @@ class Build:
 			self.tmpdir = tempfile.mkdtemp( dir=self.tmpbasedir, prefix="bld" )
 			hgdir = self.tmpdir + "/hg"
 	
-
 			# perform the checkout
 			subprocess.check_call( ["hg", "clone", "--noupdate", self.hgurl, hgdir] )
 			
@@ -81,8 +84,6 @@ class Build:
 				subprocess.check_call( ["hg", "update", "--clean"], cwd=hgdir )
 				self.buildtag = "0.0.00." + str(tiprev)
 
-		print "Buildtag =%s/%s" % (self.buildtag,self.lasttag)
-
 
 	def GetBuildTag(self):
 		return self.buildtag
@@ -92,65 +93,71 @@ class Build:
 		''' Determine the name for the source package, and return it '''
 		if not self.sourcename:
 			self.Clone()
-			with open( self.tmpdir + "/hg/debian/control") as f:
+			with codecs.open( self.tmpdir + "/hg/debian/control", 'r', 'utf-8') as f:
 				match = Build.findsource.search( f.read() )
 				self.sourcename = match.group("sourcename")
 		return self.sourcename
 
 
 	def GenerateChangelog( self ):
-		if self.versions == None:
-			self.Clone()
-			sourcename = self.GetSourceName()
+		self.Clone()
+		sourcename = self.GetSourceName()
 
-			stylepath = os.path.join( os.path.dirname(build.__file__) , "mercurial_xml_style" )
+		stylepath = os.path.join( os.path.dirname(build.__file__) , "mercurial_xml_style" )
 
-			# Request the changelog from mercurial
-			c = subprocess.Popen( ["hg", "log", "--follow", "--style", stylepath], cwd=self.tmpdir + "/hg" , stdout=subprocess.PIPE)
-			xmllog = c.communicate()[0]
+		# Request the changelog from mercurial
+		c = subprocess.Popen( ["hg", "log", "--follow", "--style", stylepath], cwd=self.tmpdir + "/hg" , stdout=subprocess.PIPE)
+		xmllog = c.communicate()[0]
 
-			# work around a bug in mercurial 1.0.1, which ignores the footer declaration from the style
-			if xmllog.find( "</log>" ) == -1:
-				xmllog += "</log>"
+		# work around a bug in mercurial 1.0.1, which ignores the footer declaration from the style
+		if xmllog.find( "</log>" ) == -1:
+			xmllog += "</log>"
+	
+		etlog = ET.fromstring( xmllog )
+	
+		tagend=None
+		taghead=None
+		anychanges=False
+		currentversion=None
+	
+		versions = defaultdict( ChangelogVersion )
+
+		for logentry in etlog:
+			if logentry.find("tag") != None:
+
+				version = logentry.find("tag").text
+			
+				currentversion = versions[version]
+				currentversion.sourcename = sourcename
+				currentversion.description = version
+				if not currentversion.author:
+					currentversion.author = "%s <%s>" % ( logentry.find("author").text, logentry.find("author").attrib["email"] )					
+				if not currentversion.date:
+					currentversion.date = ParseDateTimeUTC(logentry.find("date").text)
+
+			msg = logentry.find("msg").text
+			tag = _regex_tagging_message.match(msg)
+			if tag:
+				# This is a "Added tag <version> for changeset <hash>" message.
+				# Use the author and date for the specified version
+				taggedversion = versions[ tag.group("version") ]
+				taggedversion.author = "%s <%s>" % ( logentry.find("author").text, logentry.find("author").attrib["email"] )								
+				taggedversion.date = ParseDateTimeUTC(logentry.find("date").text)
+			else:
+				# this is a regular changelog item. Add it to the message
+				currentversion.messages.append( msg )
+			
+		if not self.buildtag in versions:
+			versions[ self.buildtag ].author = "OpenPanel packager <packages@openpanel.com>"
+			versions[ self.buildtag ].description = self.buildtag
+			versions[ self.buildtag ].date = mx.DateTime.now()
+			versions[ self.buildtag ].messages += ["Rebuilt from hg tip"]
+			versions[ self.buildtag ].sourcename = sourcename
+			
+		return versions
 		
-			etlog = ET.fromstring( xmllog )
 		
-			tagend=None
-			taghead=None
-			anychanges=False
-			currentversion=None
-		
-			self.versions = defaultdict( ChangelogVersion )
-
-			for logentry in etlog:
-				if logentry.find("tag") != None:
-
-					version = logentry.find("tag").text
-				
-					currentversion = self.versions[version]
-					currentversion.sourcename = sourcename
-					currentversion.description = version
-					if not currentversion.author:
-						currentversion.author = "%s <%s>" % ( logentry.find("author").text, logentry.find("author").attrib["email"] )					
-					if not currentversion.date:
-						currentversion.date = ParseDateTimeUTC(logentry.find("date").text)
-
-				msg = logentry.find("msg").text
-				tag = _regex_tagging_message.match(msg)
-				if tag:
-					# This is a "Added tag <version> for changeset <hash>" message.
-					# Use the author and date for the specified version
-					taggedversion = self.versions[ tag.group("version") ]
-					taggedversion.author = "%s <%s>" % ( logentry.find("author").text, logentry.find("author").attrib["email"] )								
-					taggedversion.date = ParseDateTimeUTC(logentry.find("date").text)
-				else:
-					# this is a regular changelog item. Add it to the message
-					currentversion.messages.append( msg )
-				
-		return self.versions
-		
-		
-	def WriteVersion( self, distributions=[] ):
+	def WriteVersion( self ):
 		versions = self.GenerateChangelog()
 		
 		# determine last version in changelog
@@ -158,7 +165,7 @@ class Build:
 		
 		tail = ''
 		try:
-			with open( self.tmpdir + "/hg/debian/changelog") as f:
+			with codecs.open( self.tmpdir + "/hg/debian/changelog",'r', 'utf-8') as f:
 				tail = f.read()
 				match = Build.findversion.search( tail )
 				if match:
@@ -166,40 +173,38 @@ class Build:
 		except:
 			pass
 
-		with open( self.tmpdir + "/hg/debian/changelog", 'w') as f:
+		with codecs.open( self.tmpdir + "/hg/debian/changelog", 'w', 'utf-8') as f:
 		
 			nversions = 0
-			 # FIXME: need to use version compare, otherwise 1.15.0 will sort before 1.2.0
-			for version in sorted( versions, reverse=True ):
-				if version > lastchangelogversion and versions[version].HasChanges():
+			for version in sorted( versions, reverse=True, cmp=verscmp ):
+				if verscmp(version, lastchangelogversion) > 0 and versions[version].HasChanges():
 					if version == 'tip':
 						versions[version].description = self.buildtag
 
-					f.write( versions[version].GetDebianFormatted( distributions=distributions ) )
+					f.write( versions[version].GetDebianFormatted( distributions=[self.targetdistribution] ) )
 					nversions += 1
 			
-			if nversions == 0 and versions[self.buildtag]:
-				f.write( versions[self.buildtag].GetDebianFormatted( distributions=distributions ) )
-			else:
-				self.buildtag = lastchangelogversion
+			if nversions == 0:
+				if versions[self.buildtag]:
+					f.write( versions[self.buildtag].GetDebianFormatted( distributions=[self.targetdistribution] ) )
+				else:
+					self.buildtag = lastchangelogversion
 			
 			f.write(tail)
 		
 		# write version.id with the tag to be built
-		with open( self.tmpdir + "/hg/version.id", 'w') as f:
+		with codecs.open( self.tmpdir + "/hg/version.id", 'w', 'utf-8') as f:
 			f.write( self.buildtag )
 	
 							
-	def BuildSource( self, distributions=[] ):
+	def BuildSource( self ):
 		if not self.dscpath:
-			self.WriteVersion( distributions=distributions )
+			self.WriteVersion()
 			
 			environ = {}
 			environ.update( os.environ )
 			environ["DEBFULLNAME"]="OpenPanel packager"
 			environ["DEBEMAIL"]= "packages@openpanel.com"
-			
-			print len(environ)
 			
 			c = subprocess.Popen( 
 				["dpkg-buildpackage", 
@@ -220,39 +225,34 @@ class Build:
 		return self.dscpath
 		
 	
-	def Build( self, distribution, architecture, binary_only=False, repository=None ):
+	def Build( self, architecture, binary_only=False, repository=None ):
 		dscpath = self.BuildSource()
 
-		if binary_only:
-			c = subprocess.Popen( 
-				["pbuilder", 
-					"build",
-					"--basetgz","/var/cache/pbuilder/%s-%s.tgz" % (distribution,architecture) ,
-					"--buildresult", self.tmpdir , 
-					"--binary-arch",
-					dscpath
-				])
-		else:
-			c = subprocess.Popen( 
-				["pbuilder", 
-					"build",
-					"--basetgz","/var/cache/pbuilder/%s-%s.tgz" % (distribution,architecture) ,
-					"--buildresult", self.tmpdir , 
-					dscpath
-				])
+		# jikes. I really don't want to do this, but I don't know how to prevent it...
+		# Hopefully, an answer will appear at http://stackoverflow.com/questions/4386672
+		c = subprocess.Popen( 
+				["pbuilder"] + 
+				["update"] +
+				["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution,architecture) ] +
+				["--bindmounts", "/root/repository"]
+			)
+		c.wait()
+
+		c = subprocess.Popen( 
+				["pbuilder"] + 
+				["build"] +
+				["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution,architecture) ] +
+				["--bindmounts", "/root/repository"] +
+				["--buildresult", self.tmpdir] + 
+				["--autocleanaptcache" ] +
+				( ["--binary-arch"] if binary_only else [] ) +
+				[ dscpath ]
+			)
 			
 		c.wait()
 		
 		changesfile = "%s/%s_%s_%s.changes" % (self.tmpdir, self.GetSourceName(), self.buildtag, architecture )
-		
-		if repository:
-			c = subprocess.Popen( 
-				["reprepro", 
-					"--waitforlock", "12",
-					"--basedir", repository,
-					"include", distribution , changesfile,
-				])
-			c.wait()		
+		return changesfile
 
 
 class ChangelogVersion:

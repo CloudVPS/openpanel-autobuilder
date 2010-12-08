@@ -1,21 +1,36 @@
 #!/usr/bin/env python
 
 from build import Build;
+from AptRepository import AptRepository
 import re
 
 architectures = ["amd64","i386"]
-distributions = ["lenny","squeeze"]
 
-for package in ["grace"]:#,"opencore","opencli","opencore-ssl","openpanel-gui","User.module"]:
+repository = AptRepository( "/root/repository" )
 
-	b = Build( "http://hg.openpanel.com/" + package )
+deps = ['grace']
+core_pkg = ["opencore","opencli","opencore-ssl","openpanel-gui", "authd",'coreval','coreunreg'  ]
+core_mod = ["Domain.module", "User.module" ]
+main_mod = ['Apache2.module', 'ApacheForward.module', 'Domain.module', 'MySQL.module', 'PostfixCourier.module', 'SSH.module', 'FTP.module','logax','vacationdrop']
+beta_mod = ['AWStats.module', 'IPTables.module', 'SoftwareUpdate.module', 'swupd']
+
+all_pkg = deps + core_pkg + core_mod + main_mod + beta_mod
+
+for package in all_pkg:
 	
-	b.BuildSource( distributions )
+	print "### Building package: " + package
 	
-	for distribution in distributions:
-		for architecture in architectures:
-			is_first = architecture == architectures[0]
-			changes = b.Build( distribution, architecture, binary_only = is_first, repository="/root/repository" )
+	b = Build( "http://hg.openpanel.com/" + package, "lenny" )
+	
+	#b.Clone( tip = True )
+	
+	if not repository.Exists( "lenny", "source", b.GetSourceName(), b.GetBuildTag() ):
+		repository.IncludeDsc( "lenny", b.BuildSource() )
+	
+	for architecture in architectures:
+		is_first = architecture == architectures[0]
+		if not repository.Exists( "lenny", architecture, b.GetSourceName(), b.GetBuildTag() ):
+			changes = b.Build( architecture, binary_only = is_first )
+			repository.Include( "lenny", changes )
 			
 	b.CleanUp()
-			
