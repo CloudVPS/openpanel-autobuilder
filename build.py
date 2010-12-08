@@ -229,7 +229,7 @@ class Build:
 		dscpath = self.BuildSource()
 
 		# jikes. I really don't want to do this, but I don't know how to prevent it...
-		# Hopefully, an answer will appear at http://stackoverflow.com/questions/4386672
+		# Hopefully, an answer will appear at http://stackoverflow.com/q/4386672/266042
 		c = subprocess.Popen( 
 				["pbuilder"] + 
 				["update"] +
