@@ -3,13 +3,19 @@
 from build import Build;
 import re
 
-for package in ["grace","opencore","opencli","opencore-ssl","openpanel-gui","User.module"]:
+architectures = ["amd64","i386"]
+distributions = ["lenny","squeeze"]
+
+for package in ["grace"]:#,"opencore","opencli","opencore-ssl","openpanel-gui","User.module"]:
 
 	b = Build( "http://hg.openpanel.com/" + package )
 	
-	for dist in ["lenny","squeeze","lucid"]:
-		for arch in ["amd64","i386"]:
-			b.Build( dist, arch )
+	b.BuildSource( distributions )
+	
+	for distribution in distributions:
+		for architecture in architectures:
+			is_first = architecture == architectures[0]
+			changes = b.Build( distribution, architecture, binary_only = is_first, repository="/root/repository" )
 			
 	b.CleanUp()
 			
