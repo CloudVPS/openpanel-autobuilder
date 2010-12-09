@@ -24,6 +24,7 @@ class Build:
 	findversion = re.compile('^[-a-z0-9]+ \s+ \( (?P<version> [^)]+ ) \)', re.IGNORECASE | re.X)
 	findhgtags  = re.compile('^(?P<tagname> [-a-z0-9.]+ ) \s+ (?P<rev>\d+) : [a-f0-9]+ $', re.IGNORECASE | re.X | re.MULTILINE)
 
+
 	tmpdir = None # Build location
 	sourcename = None # Name of the source package
 	version = None
@@ -31,6 +32,7 @@ class Build:
 	lasttag = None
 	buildtag = None
 	targetdistribution = None
+	
 
 	def __init__( self, hgurl, targetdistribution ):
 		self.hgurl = hgurl
