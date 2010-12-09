@@ -19,27 +19,6 @@ function make_image_debian {
 		--autocleanaptcache
 }
 
-function make_image_ubuntu {
-	DIST=$1
-	ARCH=$2	
-	
-	pbuilder create \
-		--distribution ${DIST} \
-		--basetgz /var/cache/pbuilder/${DIST}-${ARCH}.tgz \
-		--mirror http://nl.archive.ubuntu.com/ubuntu/ \
-		--othermirror "deb file:${REPOSITORY} ${DIST} main" \
-		--bindmounts "${REPOSITORY}" \
-		--debootstrap debootstrap \
-		--debootstrapopts "--arch=${ARCH}" \
-		--debootstrapopts "--variant=buildd" \
-		--debootstrapopts "--verbose" \
-		--autocleanaptcache
-
-	# if this fails, you may need to create debootstrap symlinks for lucid and maverick:
-	# ln -s /usr/share/debootstrap/scripts/gutsy /usr/share/debootstrap/scripts/maverick
-	# ln -s /usr/share/debootstrap/scripts/gutsy /usr/share/debootstrap/scripts/lucid
-}
-
 if [ ! -f "${REPOSITORY}/conf/distributions" ]; then
 	
 	mkdir -p "${REPOSITORY}/conf"
@@ -53,35 +32,18 @@ if [ ! -f "${REPOSITORY}/conf/distributions" ]; then
 	echo "DebIndices: Packages Release . .gz .bz2"		>> "${REPOSITORY}/conf/distributions"
 	echo "DscIndices: Sources Release .gz .bz2"			>> "${REPOSITORY}/conf/distributions"
 	echo "SignWith: 4EAC69B9"							>> "${REPOSITORY}/conf/distributions"
-	
-	for dist in lenny squeeze maverick lucid; do
-		echo "Codename: ${dist}" 						>> "${REPOSITORY}/conf/distributions"
-		echo "Architectures: amd64 i386 source" 		>> "${REPOSITORY}/conf/distributions"
-		echo "Components: main"					 		>> "${REPOSITORY}/conf/distributions"
-		echo "" 										>> "${REPOSITORY}/conf/distributions"
-	done	
+	echo "Tracking: all includechanges keepsources"		>> "${REPOSITORY}/conf/distributions"
+
+	echo "Codename: lenny"		 						>> "${REPOSITORY}/conf/distributions"
+	echo "Architectures: amd64 i386 source" 			>> "${REPOSITORY}/conf/distributions"
+	echo "Components: main experimental"		 		>> "${REPOSITORY}/conf/distributions"
+	echo "" 											>> "${REPOSITORY}/conf/distributions"
 
 	# generate
 	reprepro -b "${REPOSITORY}" export
 fi
 
-if [ ! -e "/usr/share/debootstrap/scripts/maverick" ]; then
-	ln -s /usr/share/debootstrap/scripts/gutsy /usr/share/debootstrap/scripts/maverick
-fi
-
-if [ ! -e "/usr/share/debootstrap/scripts/lucid" ]; then
-	ln -s /usr/share/debootstrap/scripts/gutsy /usr/share/debootstrap/scripts/lucid
-fi
-
-#make_image_ubuntu lucid    amd64
-#make_image_ubuntu lucid    i386
-
-#make_image_ubuntu maverick amd64
-#make_image_ubuntu maverick i386
-
-make_image_debian squeeze  amd64
-make_image_debian squeeze  i386
-make_image_debian lenny    amd64
-make_image_debian lenny    i386
+make_image_debian lenny amd64
+make_image_debian lenny i386
 
 
