@@ -41,7 +41,7 @@ class Build:
 	
 	def __del__( self ):
 		self.CleanUp()
-
+		pass
 
 	def CleanUp( self ):
 		# remove the tmp directory
@@ -208,6 +208,10 @@ class Build:
 			environ["DEBFULLNAME"]="OpenPanel packager"
 			environ["DEBEMAIL"]= "packages@openpanel.com"
 			
+			sourcedir = self.GetSourceName() + "-" + self.buildtag
+			os.rename( self.tmpdir + "/hg", self.tmpdir + "/" + sourcedir )
+			
+			"""
 			c = subprocess.Popen( 
 				["dpkg-buildpackage", 
 					"-S", # Source build
@@ -218,9 +222,23 @@ class Build:
 					"-epackages@openpanel.com",
 				], 
 				env=environ,
-				cwd=self.tmpdir + "/hg")
+				cwd=self.tmpdir + "/" + sourcedir)
+				"""
 				
+			c = subprocess.Popen( 
+				["debuild", 
+					"-S", # Source build
+					"-i", # use default file ignores
+					"-I", # use default dir ignores
+					"-d",  # ignore build-dependencies
+					"-k4EAC69B9",  # use gpg key for OpenPanel packager <packages@openpanel.com>
+					"-epackages@openpanel.com",
+				], 
+				env=environ,
+				cwd=self.tmpdir + "/" + sourcedir)
+								
 			c.wait()
+			shutil.rmtree( self.tmpdir + "/" + sourcedir )
 			
 			self.dscpath = "%s/%s_%s.dsc" % (self.tmpdir, self.GetSourceName(), self.buildtag)
 			
@@ -229,31 +247,40 @@ class Build:
 	
 	def Build( self, architecture, binary_only=False, repository=None ):
 		dscpath = self.BuildSource()
-
-		# jikes. I really don't want to do this, but I don't know how to prevent it...
-		# Hopefully, an answer will appear at http://stackoverflow.com/q/4386672/266042
-		c = subprocess.Popen( 
-				["pbuilder"] + 
-				["update"] +
-				["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution,architecture) ] +
-				["--bindmounts", "/root/repository"]
-			)
-		c.wait()
-
-		c = subprocess.Popen( 
-				["pbuilder"] + 
-				["build"] +
-				["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution,architecture) ] +
-				["--bindmounts", "/root/repository"] +
-				["--buildresult", self.tmpdir] + 
-				["--autocleanaptcache" ] +
-				( ["--binary-arch"] if binary_only else [] ) +
-				[ dscpath ]
-			)
-			
-		c.wait()
 		
-		changesfile = "%s/%s_%s_%s.changes" % (self.tmpdir, self.GetSourceName(), self.buildtag, architecture )
+		if architecture != 'source':
+			# jikes. I really don't want to do this, but I don't know how to prevent it...
+			# Hopefully, an answer will appear at http://stackoverflow.com/q/4386672/266042
+			c = subprocess.Popen( 
+					["pbuilder"] + 
+					["update"] +
+					["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution,architecture) ] +
+					["--bindmounts", "/root/repository"]
+				)
+			c.wait()
+				
+			if os.path.exists( self.tmpdir + "/results" ):
+				shutil.rmtree( self.tmpdir + "/results" )
+
+				
+			os.makedirs(self.tmpdir + "/results")
+	
+			c = subprocess.Popen( 
+					["pbuilder"] + 
+					["build"] +
+					["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution,architecture) ] +
+					["--bindmounts", "/root/repository"] +
+					["--buildresult", self.tmpdir + "/results"] + 
+					["--autocleanaptcache" ] +
+					( ["--binary-arch"] if binary_only else [] ) +
+					[ dscpath ]
+				)
+			
+			c.wait()
+			changesfile = "%s/results/%s_%s_%s.changes" % (self.tmpdir, self.GetSourceName(), self.buildtag, architecture )
+		else:
+			changesfile = "%s/%s_%s_%s.changes" % (self.tmpdir, self.GetSourceName(), self.buildtag, architecture )
+			
 		return changesfile
 
 
