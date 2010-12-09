@@ -7,6 +7,6 @@ rm -f "${TMPFILE}"
 rm -f "${TMPFILE}.asc"
 rm -f "${TMPFILE}.sig"
 
-./autobuilder
+./autobuilder all
 
 rsync -av /root/repository/* root@bob.openpanel.com:/srv/openpanel_repository --exclude "db/" --exclude "conf/"

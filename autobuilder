@@ -3,34 +3,108 @@
 from build import Build;
 from AptRepository import AptRepository
 import re
+import getopt,sys
 
-architectures = ["amd64","i386"]
 
-repository = AptRepository( "/root/repository" )
+def usage():
+	print "%s [options] [targets]" % sys.argv[0]
+	print "Options:"
+	print "  -h --help                     Prints out this message"
+	print "  -a --arch=[source|amd64|i386] Build specified architecture"
+	print "                                can be used multiple times"
+	print "     --force-tip                Force a build of tip version"
+	print "     --repository=[path]        The location of the reprepro repository"
+	print "  -d --distribution=[name]      The distribution to build for"
 
-deps = ['grace']
-core_pkg = ["opencore","opencli","opencore-ssl","openpanel-gui", "authd",'coreval','coreunreg'  ]
-core_mod = ["Domain.module", "User.module" ]
-main_mod = ['Apache2.module', 'ApacheForward.module', 'Domain.module', 'MySQL.module', 'PostfixCourier.module', 'SSH.module', 'FTP.module','logax','vacationdrop']
-beta_mod = ['AWStats.module', 'IPTables.module', 'SoftwareUpdate.module', 'swupd']
 
-all_pkg = deps + core_pkg + core_mod + main_mod + beta_mod
+def main():
+	print "Openpanel autobuilder 1.0"
+	try:
+		opts, packages = getopt.getopt(sys.argv[1:], "ha:d:", ["help", "arch=","force-tip","distribution"])
+	except getopt.GetoptError, err:
+        # print help information and exit:
+		print str(err) # will print something like "option -a not recognized"
+		usage()
+		sys.exit(2)
 
-for package in all_pkg:
+	architectures = []
+	repositorypath = "/root/repository"
+	distribution = "lenny"
+	forcetip = False
+
+	for o, a in opts:
+		if o in ("-h","--help"):
+			usage()
+			sys.exit()
+		elif o in ("-a","--arch"):
+			arch.append( a )
+		elif o == "--force-tip":
+			forcetip = True
+		elif o in ("-d","--distribution"):
+			distribution = a
+		else:
+			assert False, "unhandled option"
 	
-	print "### Building package: " + package
+	# provide a reasonable default for the architectures			
+	if not architectures: 
+		architectures = ["source","amd64","i386"]
+
+	# provide a reasonable default for the packages
+	if not packages: 
+		packages = ['all']
+
+	repository = AptRepository( repositorypath )
+
+	packages.reverse
+	built = []
+
+	while packages:
+		package = packages.pop()
+		
+		if package in aliases:
+			packages += reversed(aliases[package])
+		elif not package in built:
+			built.append(package)
+			print "### Building package: " + package
 	
-	b = Build( "http://hg.openpanel.com/" + package, "lenny" )
-	
-	#b.Clone( tip = True )
-	
-	if not repository.Exists( "lenny", "source", b.GetSourceName(), b.GetBuildTag() ):
-		repository.IncludeDsc( "lenny", b.BuildSource() )
-	
-	for architecture in architectures:
-		is_first = architecture == architectures[0]
-		if not repository.Exists( "lenny", architecture, b.GetSourceName(), b.GetBuildTag() ):
-			changes = b.Build( architecture, binary_only = is_first )
-			repository.Include( "lenny", changes )
+			b = Build( "http://hg.openpanel.com/" + package, distribution )
+
+			b.Clone( tip = forcetip )
+
+			need_noarch=True
+		
+			for architecture in architectures:
+				if not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+					if architecture != "source":
+						changes = b.Build( architecture, binary_only = not need_noarch )
+						need_noarch = False
+						repository.Include( distribution, changes )
+					else:
+						dsc = b.BuildSource()
+						repository.IncludeDsc( distribution, dsc )
 			
-	b.CleanUp()
+			b.CleanUp()
+
+aliases = {
+	'core-deps': 		['grace'],
+	'core': 			['core-deps', 'opencore','opencli','opencore-ssl','openpanel-gui', 'authd','coreval','coreunreg','modules-core'],
+
+	'modules':			['modules-core','modules-apache','modules-mail','modules-swup','modules-other'],
+
+	'modules-core': 	['Domain.module', 'User.module'],
+	'modules-apache': 	['Apache2.module', 'ApacheForward.module','logax'],
+	'modules-mail': 	['PostfixCourier.module', 'vacationdrop'],
+	'modules-swup': 	['SoftwareUpdate.module', 'swupd'],
+	'modules-other': 	[ 'MySQL.module',  'SSH.module', 'FTP.module','IPTables.module'],
+	
+	'experimental': 	['AWStats.module', 'Amavis.module', 'WebDAV.module', 'Networking.module','LIMA.module','limadaemon'],
+	
+	'1.0': ['core','modules'],
+	'all': ['1.0','experimental'],
+}
+
+	
+if __name__ == "__main__":
+    main()
+
+	
