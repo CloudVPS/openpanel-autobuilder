@@ -9,23 +9,19 @@ class AptRepository:
 	def __init__( self, path ):
 		self.path = path
 		
-	def Include( self, distribution, changesfile ):
+	def Include( self, distribution, changesfile, component=None ):
+		print "### Including %s" % changesfile
 		c = subprocess.Popen( 
 			["reprepro"]  +
 			["--waitforlock", "12"] +
+			(["--component", component] if component else []) +
 			["--basedir", self.path] +
 			["include", distribution , changesfile]
 			)
 		c.wait()		
 
-	def IncludeDsc( self, distribution, dscfile ):
-		c = subprocess.Popen( 
-			["reprepro"]  +
-			["--waitforlock", "12"] +
-			["--basedir", self.path] +
-			["includedsc", distribution , dscfile]
-			)
-		c.wait()		
+		if c.returncode:
+			raise "Process exit with code: %s" % c.returncode
 
 	def Exists( self, distribution, architecture, sourcename, version ):
 		args = []
@@ -40,6 +36,9 @@ class AptRepository:
 			stdout=subprocess.PIPE)
 			
 		output = c.communicate()[0]
+		
+		if c.returncode:
+			raise "Process exit with code: %s" % c.returncode
 				
 		for match in _regex_parse_list.finditer(output):
 			if verscmp(match.group("version"), version) >= 0:
