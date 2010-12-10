@@ -101,9 +101,9 @@ aliases = {
 	'modules-apache': 	['Apache2.module', 'ApacheForward.module','logax'],
 	'modules-mail': 	['PostfixCourier.module', 'vacationdrop'],
 	'modules-swup': 	['SoftwareUpdate.module', 'swupd'],
-	'modules-other': 	[ 'MySQL.module',  'SSH.module', 'FTP.module','IPTables.module'],
+	'modules-other': 	[ 'DNSDomain.module', 'MySQL.module',  'SSH.module', 'FTP.module','IPTables.module'],
 	
-	'experimental': 	['AWStats.module', 'Amavis.module', 'WebDAV.module', 'Networking.module','LIMA.module','limadaemon'],
+	'experimental': 	['AWStats.module', 'Amavis.module', 'Networking.module','LIMA.module','limadaemon'],
 	
 	'1.0': ['core','modules'],
 	'all': ['1.0','experimental'],
