@@ -20,7 +20,7 @@ def usage():
 def main():
 	print "Openpanel autobuilder 1.0"
 	try:
-		opts, packages = getopt.getopt(sys.argv[1:], "ha:d:", ["help", "arch=","force-tip","distribution"])
+		opts, packages = getopt.getopt(sys.argv[1:], "ha:d:", ["help", "arch=","force-tip","distribution="])
 	except getopt.GetoptError, err:
         # print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -29,7 +29,7 @@ def main():
 
 	architectures = []
 	repositorypath = "/root/repository"
-	distribution = "lenny"
+	distribution = None
 	forcetip = False
 
 	for o, a in opts:
@@ -44,6 +44,9 @@ def main():
 			distribution = a
 		else:
 			assert False, "unhandled option"
+
+	if not distribution: 
+		distribution = "tip" if forcetip else "stable"
 	
 	# provide a reasonable default for the architectures			
 	if not architectures: 
@@ -76,7 +79,6 @@ def main():
 			
 			component = 'experimental' if (package in aliases['experimental']) else None
 				
-		
 			for architecture in architectures:
 				if not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
 					changes = b.Build( architecture, binary_only = not need_noarch )

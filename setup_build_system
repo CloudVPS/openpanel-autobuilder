@@ -3,14 +3,15 @@
 REPOSITORY="/root/repository"
 
 function make_image_debian {
-	DIST=$1
-	ARCH=$2	
+	DIST_OS=$1
+	DIST_OP=$2
+	ARCH=$3	
 	
 	pbuilder create \
-		--distribution ${DIST} \
-		--basetgz /var/cache/pbuilder/${DIST}-${ARCH}.tgz \
+		--distribution ${DIST_OS} \
+		--basetgz /var/cache/pbuilder/${DIST_OP}-${ARCH}.tgz \
 		--mirror ftp://ftp.nl.debian.org/debian/ \
-		--othermirror "deb file:${REPOSITORY} ${DIST} main" \
+		--othermirror "deb file:${REPOSITORY} ${DIST_OP} main" \
 		--bindmounts "${REPOSITORY}" \
 		--debootstrap cdebootstrap \
 		--debootstrapopts "--arch=${ARCH}" \
@@ -34,16 +35,26 @@ if [ ! -f "${REPOSITORY}/conf/distributions" ]; then
 	echo "SignWith: 4EAC69B9"							>> "${REPOSITORY}/conf/distributions"
 	echo "Tracking: all includechanges keepsources"		>> "${REPOSITORY}/conf/distributions"
 
-	echo "Codename: lenny"		 						>> "${REPOSITORY}/conf/distributions"
+	echo "Codename: stable"		 						>> "${REPOSITORY}/conf/distributions"
 	echo "Architectures: amd64 i386 source" 			>> "${REPOSITORY}/conf/distributions"
+	echo "Components: main experimental"		 		>> "${REPOSITORY}/conf/distributions"
+	echo "" 											>> "${REPOSITORY}/conf/distributions"
+	echo "Codename: tip"		 						>> "${REPOSITORY}/conf/distributions"
+	echo "Architectures: amd64 i386 armel source"		>> "${REPOSITORY}/conf/distributions"
 	echo "Components: main experimental"		 		>> "${REPOSITORY}/conf/distributions"
 	echo "" 											>> "${REPOSITORY}/conf/distributions"
 
 	# generate
 	reprepro -b "${REPOSITORY}" export
+	ln -s "stable" "${REPOSITORY}/dist/lenny"
+	ln -s "stable" "${REPOSITORY}/dist/squeeze"
 fi
 
-make_image_debian lenny amd64
-make_image_debian lenny i386
+make_image_debian lenny stable amd64
+make_image_debian lenny stable i386
+make_image_debian lenny tip amd64
+make_image_debian lenny tip i386
+
+
 
 

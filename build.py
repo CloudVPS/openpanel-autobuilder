@@ -78,7 +78,7 @@ class Build:
 
 			if tip: #checking out the tip version to build
 				subprocess.check_call( ["hg", "update", "--clean"], cwd=hgdir )
-				self.buildtag = (self.lasttag or "0.0.0") + "." + str(tiprev)
+				self.buildtag = (self.lasttag or "0.0.00") + "." + str(tiprev) + "+tip"
 			elif self.lasttag: # checking out the last tag
 				subprocess.check_call( ["hg", "update", "--clean", self.lasttag], cwd=hgdir )
 				self.buildtag = self.lasttag
