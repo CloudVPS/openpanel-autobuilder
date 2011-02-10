@@ -32,7 +32,7 @@ class AptRepository:
 			["--waitforlock", "12"] +
 			["--basedir", self.path] +
 			( ["-A", architecture] if architecture else [] ) +
-			["list", distribution , sourcename], 
+			["listfilter", distribution , "Source (==%s)" % sourcename ], 
 			stdout=subprocess.PIPE)
 			
 		output = c.communicate()[0]
