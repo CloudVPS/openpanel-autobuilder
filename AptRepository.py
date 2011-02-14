@@ -24,9 +24,6 @@ class AptRepository:
 			raise "Process exit with code: %s" % c.returncode
 
 	def Exists( self, distribution, architecture, sourcename, version ):
-		args = []
-		args += [ "--waitforlock", "12" ]
-		
 		c = subprocess.Popen( 
 			["reprepro"]  +
 			["--waitforlock", "12"] +
