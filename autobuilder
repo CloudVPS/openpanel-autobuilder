@@ -50,7 +50,7 @@ def main():
 	
 	# provide a reasonable default for the architectures			
 	if not architectures: 
-		architectures = ["amd64","i386"]
+		architectures = ["amd64","i386"] if forcetip else ["amd64","i386","armel"]
 
 	# provide a reasonable default for the packages
 	if not packages: 
@@ -105,7 +105,7 @@ aliases = {
 	'modules-swup': 	['SoftwareUpdate.module', 'swupd'],
 	'modules-other': 	[ 'DNSDomain.module', 'MySQL.module',  'SSH.module', 'FTP.module','IPTables.module'],
 	
-	'experimental': 	['AWStats.module', 'Amavis.module', 'Networking.module','LIMA.module','limadaemon'],
+	'experimental': 	['AWStats.module', 'Amavis.module', 'LIMA.module','limadaemon'],
 	
 	'1.0': ['core','modules'],
 	'all': ['1.0','experimental'],
