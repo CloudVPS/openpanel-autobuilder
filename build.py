@@ -36,7 +36,10 @@ class Build:
 
 	def __init__( self, hgurl, targetdistribution ):
 		self.hgurl = hgurl
-		self.targetdistribution = targetdistribution
+		if isinstance(targetdistribution,str) or isinstance(targetdistribution,unicode): 
+			self.targetdistribution = [targetdistribution]
+		else:
+			self.targetdistribution = targetdistribution
 
 	
 	def __del__( self ):
@@ -183,12 +186,12 @@ class Build:
 					if version == 'tip':
 						versions[version].description = self.buildtag
 
-					f.write( versions[version].GetDebianFormatted( distributions=[self.targetdistribution] ) )
+					f.write( versions[version].GetDebianFormatted( distributions=self.targetdistribution ) )
 					nversions += 1
 			
 			if nversions == 0:
 				if versions[self.buildtag]:
-					f.write( versions[self.buildtag].GetDebianFormatted( distributions=[self.targetdistribution] ) )
+					f.write( versions[self.buildtag].GetDebianFormatted( distributions=self.targetdistribution ) )
 				else:
 					self.buildtag = lastchangelogversion
 			
@@ -254,7 +257,7 @@ class Build:
 			c = subprocess.Popen( 
 					["pbuilder"] + 
 					["update"] +
-					["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution,architecture) ] +
+					["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution[0],architecture) ] +
 					["--bindmounts", "/root/repository"]
 				)
 			c.wait()
@@ -268,7 +271,7 @@ class Build:
 			c = subprocess.Popen( 
 					["pbuilder"] + 
 					["build"] +
-					["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution,architecture) ] +
+					["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution[0],architecture) ] +
 					["--bindmounts", "/root/repository"] +
 					["--buildresult", self.tmpdir + "/results"] + 
 					["--autocleanaptcache" ] +
