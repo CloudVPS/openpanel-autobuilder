@@ -36,7 +36,7 @@ if [ ! -f "${REPOSITORY}/conf/distributions" ]; then
 	echo "Tracking: all includechanges keepsources"		>> "${REPOSITORY}/conf/distributions"
 
 	echo "Codename: stable"		 						>> "${REPOSITORY}/conf/distributions"
-	echo "Architectures: amd64 i386 armel source" 			>> "${REPOSITORY}/conf/distributions"
+	echo "Architectures: amd64 i386 armel source" 		>> "${REPOSITORY}/conf/distributions"
 	echo "Components: main experimental"		 		>> "${REPOSITORY}/conf/distributions"
 	echo "" 											>> "${REPOSITORY}/conf/distributions"
 	echo "Codename: tip"		 						>> "${REPOSITORY}/conf/distributions"
