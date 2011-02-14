@@ -71,7 +71,7 @@ def main():
 			built.append(package)
 			print "### Building package: " + package
 	
-			b = Build( "http://hg.openpanel.com/" + package, distribution )
+			b = Build( "https://hg.openpanel.com/" + package, distribution )
 
 			b.Clone( tip = forcetip )
 
