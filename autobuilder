@@ -50,7 +50,7 @@ def main():
 	
 	# provide a reasonable default for the architectures			
 	if not architectures: 
-		architectures = ["amd64","i386"] if forcetip else ["amd64","i386","armel"]
+		architectures = ["amd64","i386",,"armel"] if forcetip else ["amd64","i386"]
 
 	# provide a reasonable default for the packages
 	if not packages: 
