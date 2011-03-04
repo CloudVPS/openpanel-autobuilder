@@ -25,12 +25,12 @@ class AptRepository:
 
 	def Exists( self, distribution, architecture, sourcename, version ):
 
-		arch_filter = "Architecture (==%s)" % architecture
+		arch_filter = "Architecture (==%s)," % architecture if architecture else ""
 
 		# for packages that were part
 		pkg_filter = [
-			"(%s,Source (==%s))" % (arch_filter,sourcename),
-			"(%s,!Source,Package(==%s))" % (arch_filter,sourcename)
+			"(%s Source (==%s))" % (arch_filter,sourcename),
+			"(%s !Source,Package(==%s))" % (arch_filter,sourcename)
 		]
 		pkg_filter = "|".join(pkg_filter)
 		

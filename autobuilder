@@ -50,7 +50,7 @@ def main():
 	
 	# provide a reasonable default for the architectures			
 	if not architectures: 
-		architectures = ["amd64","i386",,"armel"] if forcetip else ["amd64","i386"]
+		architectures = ["amd64","i386","armel"] if forcetip else ["amd64","i386"]
 
 	# provide a reasonable default for the packages
 	if not packages: 
@@ -75,20 +75,20 @@ def main():
 
 			b.Clone( tip = forcetip )
 
-			need_noarch=True
-			
 			component = 'experimental' if (package in aliases['experimental']) else None
 				
 			for architecture in architectures:
 				if not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+					# We dont need noarch if the package has been built for other archs
+					need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
+
+					# openpanel-gui has only noarch, building without it will fail
+					if package == 'openpanel-gui' and not need_noarch: continue # HACK
+
 					changes = b.Build( architecture, binary_only = not need_noarch )
 
-					need_noarch = False
-						
 					repository.Include( distribution, changes, component=component )
 
-					if package == 'openpanel-gui': # HACK
-						break # HACK
 			
 			b.CleanUp()
 
