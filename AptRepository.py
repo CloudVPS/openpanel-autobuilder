@@ -24,12 +24,23 @@ class AptRepository:
 			raise "Process exit with code: %s" % c.returncode
 
 	def Exists( self, distribution, architecture, sourcename, version ):
+
+		arch_filter = "Architecture (==%s)" % architecture
+
+		# for packages that were part
+		pkg_filter = [
+			"(%s,Source (==%s))" % (arch_filter,sourcename),
+			"(%s,!Source,Package(==%s))" % (arch_filter,sourcename)
+		]
+		pkg_filter = "|".join(pkg_filter)
+		
+	
 		c = subprocess.Popen( 
 			["reprepro"]  +
 			["--waitforlock", "12"] +
 			["--basedir", self.path] +
 			( ["-A", architecture] if architecture else [] ) +
-			["listfilter", distribution , "Architecture (==%s), (Source (==%s) | (!Source, Package (==%s)))" % (architecture,sourcename,sourcename) ], 
+			["listfilter", distribution , pkg_filter ], 
 			stdout=subprocess.PIPE)
 			
 		output = c.communicate()[0]
