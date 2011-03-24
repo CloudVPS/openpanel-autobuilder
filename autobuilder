@@ -12,6 +12,8 @@ def usage():
 	print "  -h --help                     Prints out this message"
 	print "  -a --arch=[source|amd64|i386] Build specified architecture"
 	print "                                can be used multiple times"
+	print "  -u --up-one	               Force building an already built version by "
+	print "                                incrementing the version number suffix"
 	print "     --force-tip                Force a build of tip version"
 	print "     --repository=[path]        The location of the reprepro repository"
 	print "  -d --distribution=[name]      The distribution to build for"
@@ -20,7 +22,7 @@ def usage():
 def main():
 	print "Openpanel autobuilder 1.0"
 	try:
-		opts, packages = getopt.getopt(sys.argv[1:], "ha:d:", ["help", "arch=","force-tip","distribution="])
+		opts, packages = getopt.getopt(sys.argv[1:], "hua:d:", ["help", "up-one", "arch=", "force-tip", "distribution="])
 	except getopt.GetoptError, err:
         # print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -31,6 +33,7 @@ def main():
 	repositorypath = "/root/repository"
 	distribution = None
 	forcetip = False
+	upone = False
 
 	for o, a in opts:
 		if o in ("-h","--help"):
@@ -42,6 +45,8 @@ def main():
 			forcetip = True
 		elif o in ("-d","--distribution"):
 			distribution = a
+		elif o in ("-u","--upone"):
+			upone = True
 		else:
 			assert False, "unhandled option"
 
@@ -78,7 +83,14 @@ def main():
 			component = 'experimental' if (package in aliases['experimental']) else None
 				
 			for architecture in architectures:
-				if not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+				if upone:
+					buildtag = b.GetBuildTag() 
+					buildtagnum = 0
+					while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+						b.buildtag = buildtag + ( ".%d" % buildtagnum )
+						buildtagnum += 1
+			
+				if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
 					# We dont need noarch if the package has been built for other archs
 					need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
 
