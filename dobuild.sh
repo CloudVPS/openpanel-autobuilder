@@ -18,7 +18,7 @@ for pkg in `rsync -av /root/repository/* root@bob.openpanel.com:/srv/openpanel_r
 done
 
 ./autobuilder --force-tip
-rsync -navv /root/repository/* 'root@bob.openpanel.com:/srv/openpanel_repository' --exclude "db/" --exclude "conf/" |
+rsync -av /root/repository/* 'root@bob.openpanel.com:/srv/openpanel_repository' --exclude "db/" --exclude "conf/" |
     grep -oe '^pool/.*\.deb' | 
     grep "+tip_" | 
     sed 's%pool/.*/\([a-z0-9.-]*\)_.*%\1%' | 
