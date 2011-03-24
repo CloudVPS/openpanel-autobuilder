@@ -45,10 +45,10 @@ def main():
 			forcetip = True
 		elif o in ("-d","--distribution"):
 			distribution = a
-		elif o in ("-u","--upone"):
+		elif o in ("-u","--up-one"):
 			upone = True
 		else:
-			assert False, "unhandled option"
+			assert False, "unhandled option:"
 
 	if not distribution: 
 		distribution = "tip" if forcetip else "stable"
