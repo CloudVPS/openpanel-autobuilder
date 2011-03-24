@@ -23,7 +23,7 @@ rsync -av /root/repository/* 'root@bob.openpanel.com:/srv/openpanel_repository' 
     grep "+tip_" | 
     sed 's%pool/.*/\([a-z0-9.-]*\)_.*%\1%' | 
     sort -u |
-    xargs -s 200 echo "New TIP for: " | 
+    xargs -rs 200 echo "New TIP for: " | 
     nc -uq0 krakras.office.xl-is.net 18000
 
 
