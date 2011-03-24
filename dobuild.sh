@@ -20,7 +20,7 @@ done
 ./autobuilder --force-tip
 rsync -av /root/repository/* 'root@bob.openpanel.com:/srv/openpanel_repository' --exclude "db/" --exclude "conf/" |
     grep -oe '^pool/.*\.deb' | 
-    grep "+tip_" | 
+    grep "+tip" | 
     sed 's%pool/.*/\([a-z0-9.-]*\)_.*%\1%' | 
     sort -u |
     xargs -rs 200 echo "New TIP for: " | 
