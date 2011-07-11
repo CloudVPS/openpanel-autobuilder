@@ -34,6 +34,7 @@ class AptRepository:
 		]
 		pkg_filter = "|".join(pkg_filter)
 		
+		print pkg_filter
 	
 		c = subprocess.Popen( 
 			["reprepro"]  +
@@ -50,6 +51,7 @@ class AptRepository:
 				
 		for match in _regex_parse_list.finditer(output):
 			if verscmp(match.group("version"), version) >= 0:
+				print version
 				return True
 
 		return False

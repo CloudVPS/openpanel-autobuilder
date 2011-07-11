@@ -55,8 +55,8 @@ def main():
 	
 	# provide a reasonable default for the architectures			
 	if not architectures: 
-		architectures = ["amd64","i386","armel"] if forcetip else ["amd64","i386"]
-
+		architectures = ["amd64","i386"] if forcetip else ["amd64","i386"]
+	
 	# provide a reasonable default for the packages
 	if not packages: 
 		packages = ['all']
@@ -79,28 +79,29 @@ def main():
 			b = Build( "https://hg.openpanel.com/" + package, [distribution] + ["squeeze","lenny","maverick","lucid"])
 
 			b.Clone( tip = forcetip )
-
-			component = 'experimental' if (package in aliases['experimental']) else None
-				
-			for architecture in architectures:
-				if upone:
-					buildtag = b.GetBuildTag() 
-					buildtagnum = 0
-					while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
-						b.buildtag = buildtag + ( ".%d" % buildtagnum )
-						buildtagnum += 1
 			
-				if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
-					# We dont need noarch if the package has been built for other archs
-					need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
+			if b.buildtag:
 
-					# openpanel-gui has only noarch, building without it will fail
-					if package == 'openpanel-gui' and not need_noarch: continue # HACK
+			    component = 'experimental' if (package in aliases['experimental']) else None
+				
+			    for architecture in architectures:
+				    if upone:
+					    buildtag = b.GetBuildTag() 
+					    buildtagnum = 0
+					    while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+						    b.buildtag = buildtag + ( ".%d" % buildtagnum )
+						    buildtagnum += 1
+			
+				    if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+					    # We dont need noarch if the package has been built for other archs
+					    need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
 
-					changes = b.Build( architecture, binary_only = not need_noarch )
+					    # openpanel-gui has only noarch, building without it will fail
+					    if package == 'openpanel-gui' and not need_noarch: continue # HACK
 
-					repository.Include( distribution, changes, component=component )
+					    changes = b.Build( architecture, binary_only = not need_noarch )
 
+					    repository.Include( distribution, changes, component=component )
 			
 			b.CleanUp()
 
@@ -113,14 +114,16 @@ aliases = {
 
 	'modules-core': 	['Domain.module', 'User.module'],
 	'modules-apache': 	['Apache2.module', 'ApacheForward.module','logax'],
-	'modules-mail': 	['PostfixCourier.module', 'vacationdrop'],
+	'modules-mail': 	['PostfixCourier.module', 'vacationdrop', "SpamAssassin.module"],
 	'modules-swup': 	['SoftwareUpdate.module', 'swupd'],
 	'modules-other': 	[ 'DNSDomain.module', 'MySQL.module',  'SSH.module', 'FTP.module','IPTables.module'],
 	
 	'experimental': 	['AWStats.module', 'Amavis.module', 'LIMA.module','limadaemon'],
 	
+	'openapp':          ['openapp/openpanel-openapp-gui','openapp/openapp-backup','openapp/openapp-joomla','openapp/openapp-mod-user'],
+	
 	'1.0': ['core','modules'],
-	'all': ['1.0','experimental'],
+	'all': ['1.0','experimental','openapp'],
 }
 
 	

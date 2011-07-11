@@ -71,24 +71,27 @@ class Build:
 			taglist = c.communicate()[0]
 			
 			tiprev = 0
-			
+			lasttag = "0.0.0"
 			for match in self.findhgtags.finditer( taglist ):
 				if match.group("tagname") != 'tip':
-					self.lasttag = match.group("tagname")
+					self.lasttag = lasttag = match.group("tagname")
 					break
 				else:
 					tiprev = long(match.group("rev"))
 
+			split_tag = lasttag.split(".")
+			while len(split_tag) < 3:
+				split_tag.append("0")
+				lasttag = ".".join(split_tag)
+
 			if tip: #checking out the tip version to build
 				subprocess.check_call( ["hg", "update", "--clean"], cwd=hgdir )
-				self.buildtag = (self.lasttag or "0.0.00") + "." + str(tiprev) + "+tip"
+				self.buildtag = lasttag + "." + str(tiprev) + "+tip"
 			elif self.lasttag: # checking out the last tag
 				subprocess.check_call( ["hg", "update", "--clean", self.lasttag], cwd=hgdir )
-				self.buildtag = self.lasttag
-			else: # No tags available, checking out the tip
-				subprocess.check_call( ["hg", "update", "--clean"], cwd=hgdir )
-				self.buildtag = "0.0.00." + str(tiprev)
-
+				self.buildtag = lasttag
+			else:
+			    self.buildtag = None	    
 
 	def GetBuildTag(self):
 		return self.buildtag
@@ -131,6 +134,11 @@ class Build:
 			if logentry.find("tag") != None:
 
 				version = logentry.find("tag").text
+				
+				if version != 'tip':
+				    version_s = version.split('.',2)
+				    if len(version_s) == 2:
+					    version += '.0'
 			
 				currentversion = versions[version]
 				currentversion.sourcename = sourcename
