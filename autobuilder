@@ -7,131 +7,131 @@ import getopt,sys
 
 
 def usage():
-	print "%s [options] [targets]" % sys.argv[0]
-	print "Options:"
-	print "  -h --help                     Prints out this message"
-	print "  -a --arch=[source|amd64|i386] Build specified architecture"
-	print "                                can be used multiple times"
-	print "  -u --up-one	               Force building an already built version by "
-	print "                                incrementing the version number suffix"
-	print "     --force-tip                Force a build of tip version"
-	print "     --repository=[path]        The location of the reprepro repository"
-	print "  -d --distribution=[name]      The distribution to build for"
+    print "%s [options] [targets]" % sys.argv[0]
+    print "Options:"
+    print "  -h --help                     Prints out this message"
+    print "  -a --arch=[source|amd64|i386] Build specified architecture"
+    print "                                can be used multiple times"
+    print "  -u --up-one                   Force building an already built version by "
+    print "                                incrementing the version number suffix"
+    print "     --force-tip                Force a build of tip version"
+    print "     --repository=[path]        The location of the reprepro repository"
+    print "  -d --distribution=[name]      The distribution to build for"
 
 
 def main():
-	print "Openpanel autobuilder 1.0"
-	try:
-		opts, packages = getopt.getopt(sys.argv[1:], "hua:d:", ["help", "up-one", "arch=", "force-tip", "distribution="])
-	except getopt.GetoptError, err:
+    print "Openpanel autobuilder 1.0"
+    try:
+        opts, packages = getopt.getopt(sys.argv[1:], "hua:d:", ["help", "up-one", "arch=", "force-tip", "distribution="])
+    except getopt.GetoptError, err:
         # print help information and exit:
-		print str(err) # will print something like "option -a not recognized"
-		usage()
-		sys.exit(2)
+        print str(err) # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
 
-	architectures = []
-	repositorypath = "/root/repository"
-	distribution = None
-	forcetip = False
-	upone = False
+    architectures = []
+    repositorypath = "/root/repository"
+    distribution = None
+    forcetip = False
+    upone = False
 
-	for o, a in opts:
-		if o in ("-h","--help"):
-			usage()
-			sys.exit()
-		elif o in ("-a","--arch"):
-			architectures.append( a )
-		elif o == "--force-tip":
-			forcetip = True
-		elif o in ("-d","--distribution"):
-			distribution = a
-		elif o in ("-u","--up-one"):
-			upone = True
-		else:
-			assert False, "unhandled option:"
+    for o, a in opts:
+        if o in ("-h","--help"):
+            usage()
+            sys.exit()
+        elif o in ("-a","--arch"):
+            architectures.append( a )
+        elif o == "--force-tip":
+            forcetip = True
+        elif o in ("-d","--distribution"):
+            distribution = a
+        elif o in ("-u","--up-one"):
+            upone = True
+        else:
+            assert False, "unhandled option:"
 
-	if not distribution: 
-		distribution = "tip" if forcetip else "stable"
-	
-	# provide a reasonable default for the architectures			
-	if not architectures: 
-		architectures = ["amd64","i386"] if forcetip else ["amd64","i386"]
-	
-	# provide a reasonable default for the packages
-	if not packages: 
-		packages = ['all']
+    if not distribution: 
+        distribution = "tip" if forcetip else "stable"
+    
+    # provide a reasonable default for the architectures            
+    if not architectures: 
+        architectures = ["amd64","i386"] if forcetip else ["amd64","i386"]
+    
+    # provide a reasonable default for the packages
+    if not packages: 
+        packages = ['all']
 
-	repository = AptRepository( repositorypath )
+    repository = AptRepository( repositorypath )
 
-	packages.reverse()
-	
-	built = []
+    packages.reverse()
+    
+    built = []
 
-	while packages:
-		package = packages.pop()
-		
-		if package in aliases:
-			packages += reversed(aliases[package])
-		elif not package in built:
-			built.append(package)
-			print "### Building package: " + package
-	
-			b = Build( "https://hg.openpanel.com/" + package, [distribution] + ["squeeze","lenny","maverick","lucid"])
+    while packages:
+        package = packages.pop()
+        
+        if package in aliases:
+            packages += reversed(aliases[package])
+        elif not package in built:
+            built.append(package)
+            print "### Building package: " + package
+    
+            b = Build( "https://hg.openpanel.com/" + package, [distribution] + ["squeeze","lenny","maverick","lucid"])
 
-			b.Clone( tip = forcetip )
-			
-			if b.buildtag:
+            b.Clone( tip = forcetip )
+            
+            if b.buildtag:
 
-			    if package.startswith('openapp/'):
-			        component = 'openapp'
-			    else:
-			        component = 'experimental' if (package in aliases['experimental']) else None
-				
-			    for architecture in architectures:
-				    if upone:
-					    buildtag = b.GetBuildTag() 
-					    buildtagnum = 0
-					    while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
-						    b.buildtag = buildtag + ( ".%d" % buildtagnum )
-						    buildtagnum += 1
-			
-				    if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
-					    # We dont need noarch if the package has been built for other archs
-					    need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
+                if package.startswith('openapp/'):
+                    component = 'openapp'
+                else:
+                    component = 'experimental' if (package in aliases['experimental']) else None
+                
+                for architecture in architectures:
+                    if upone:
+                        buildtag = b.GetBuildTag() 
+                        buildtagnum = 0
+                        while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+                            b.buildtag = buildtag + ( ".%d" % buildtagnum )
+                            buildtagnum += 1
+            
+                    if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+                        # We dont need noarch if the package has been built for other archs
+                        need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
 
-					    # For packages with the 'all' architecture, building one package is enough.
-					    if not need_noarch and b.GetArchitectures() == set(['all']): 
-						    continue 
+                        # For packages with the 'all' architecture, building one package is enough.
+                        if not need_noarch and b.GetArchitectures() == set(['all']): 
+                            continue 
 
-					    changes = b.Build( architecture, binary_only = not need_noarch )
+                        changes = b.Build( architecture, binary_only = not need_noarch )
 
-					    repository.Include( distribution, changes, component=component )
-			
-			b.CleanUp()
+                        repository.Include( distribution, changes, component=component )
+            
+            b.CleanUp()
 
 
 aliases = {
-	'core-deps': 		['grace'],
-	'core': 			['core-deps', 'opencore','opencli','opencore-ssl','openpanel-gui', 'authd','coreval','coreunreg','modules-core'],
+    'core-deps':        ['grace'],
+    'core':             ['core-deps', 'opencore','opencli','opencore-ssl','openpanel-gui', 'authd','coreval','coreunreg','modules-core'],
 
-	'modules':			['modules-core','modules-apache','modules-mail','modules-swup','modules-other'],
+    'modules':          ['modules-core','modules-apache','modules-mail','modules-swup','modules-other'],
 
-	'modules-core': 	['Domain.module', 'User.module'],
-	'modules-apache': 	['Apache2.module', 'ApacheForward.module','logax'],
-	'modules-mail': 	['PostfixCourier.module', 'vacationdrop', "SpamAssassin.module"],
-	'modules-swup': 	['SoftwareUpdate.module', 'swupd'],
-	'modules-other': 	[ 'DNSDomain.module', 'MySQL.module',  'SSH.module', 'FTP.module','IPTables.module'],
-	
-	'experimental': 	['AWStats.module', 'Amavis.module', 'LIMA.module','limadaemon'],
-	
-	'openapp':          ['openapp/openpanel-openapp-gui','openapp/openapp-backup','openapp/openapp-joomla','openapp/openapp-mod-user'],
-	
-	'1.0': ['core','modules'],
-	'all': ['1.0','experimental','openapp'],
+    'modules-core':     ['Domain.module', 'User.module'],
+    'modules-apache':   ['Apache2.module', 'ApacheForward.module','logax'],
+    'modules-mail':     ['PostfixCourier.module', 'vacationdrop', "SpamAssassin.module"],
+    'modules-swup':     ['SoftwareUpdate.module', 'swupd'],
+    'modules-other':    [ 'DNSDomain.module', 'MySQL.module',  'SSH.module', 'FTP.module','IPTables.module'],
+    
+    'experimental':     ['AWStats.module', 'Amavis.module', 'LIMA.module','limadaemon'],
+    
+    'openapp':          ['openapp/openpanel-openapp-gui','openapp/openapp-backup','openapp/openapp-joomla','openapp/openapp-mod-user'],
+    
+    '1.0': ['core','modules'],
+    'all': ['1.0','experimental','openapp'],
 }
 
-	
+    
 if __name__ == "__main__":
     main()
 
-	
+    
