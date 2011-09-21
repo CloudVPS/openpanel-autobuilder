@@ -82,7 +82,10 @@ def main():
 			
 			if b.buildtag:
 
-			    component = 'experimental' if (package in aliases['experimental']) else None
+			    if package.startswith('openapp/'):
+			        component = 'openapp'
+			    else:
+			        component = 'experimental' if (package in aliases['experimental']) else None
 				
 			    for architecture in architectures:
 				    if upone:
