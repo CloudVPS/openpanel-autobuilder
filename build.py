@@ -116,7 +116,7 @@ class Build:
             self.architectures = set()
 
             with codecs.open( self.tmpdir + "/hg/debian/control", 'r', 'utf-8') as f:
-                for match in Build.findsource.finall( f.read() )
+                for match in Build.findsource.finall( f.read() ):
                     self.architectures.add( match.group("arch").split() )
         
         return self.architectures
