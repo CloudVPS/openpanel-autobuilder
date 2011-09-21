@@ -99,8 +99,9 @@ def main():
 					    # We dont need noarch if the package has been built for other archs
 					    need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
 
-					    # openpanel-gui has only noarch, building without it will fail
-					    if package == 'openpanel-gui' and not need_noarch: continue # HACK
+					    # For packages with the 'all' architecture, building one package is enough.
+					    if not need_noarch and b.GetArchitectures() == set(['all']): 
+						    continue 
 
 					    changes = b.Build( architecture, binary_only = not need_noarch )
 

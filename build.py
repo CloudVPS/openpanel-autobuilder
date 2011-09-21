@@ -20,13 +20,15 @@ import codecs
 
 class Build:
 	tmpbasedir="/tmp/"
-	findsource  = re.compile('^Source:\s*(?P<sourcename>.*)$', re.IGNORECASE | re.MULTILINE)
+	findsource  = re.compile('^Source:\s*(?P<sourcename>.*)\s*$', re.IGNORECASE | re.MULTILINE)
+	findarch    = re.compile('^Architecture:\s*(?P<arch>.*)\s*$', re.IGNORECASE | re.MULTILINE)
 	findversion = re.compile('^[-a-z0-9]+ \s+ \( (?P<version> [^)]+ ) \)', re.IGNORECASE | re.X)
 	findhgtags  = re.compile('^(?P<tagname> [-a-z0-9.]+ ) \s+ (?P<rev>\d+) : [a-f0-9]+ $', re.IGNORECASE | re.X | re.MULTILINE)
 
 
 	tmpdir = None # Build location
 	sourcename = None # Name of the source package
+	architectures = None
 	version = None
 	dscpath = None
 	lasttag = None
@@ -105,6 +107,19 @@ class Build:
 				match = Build.findsource.search( f.read() )
 				self.sourcename = match.group("sourcename")
 		return self.sourcename
+
+
+	def GetArchitectures( self ):
+		''' Determine the name for the source package, and return it '''
+		if not self.architectures:
+			self.Clone()
+			self.architectures = set()
+
+			with codecs.open( self.tmpdir + "/hg/debian/control", 'r', 'utf-8') as f:
+				for match in Build.findsource.finall( f.read() )
+					self.architectures.add( match.group("arch").split() )
+		
+		return self.architectures
 
 
 	def GenerateChangelog( self ):
