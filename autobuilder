@@ -147,7 +147,6 @@ aliases = {
         'openapp/openpanel-openapp-mod-joomla',
         'openapp/openpanel-openapp-mod-mysql',
         'openapp/openpanel-openapp-mod-smtp',
-        'openapp/openpanel-openapp-mod-symfony',
         'openapp/openpanel-openapp-mod-user',
         'openapp/openpanel-openapp-mod-wordpress',
         'openapp/openpanel-openapp-mysql-artwork',
