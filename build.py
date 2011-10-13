@@ -161,6 +161,10 @@ class Build:
                 currentversion = versions[version]
                 currentversion.sourcename = sourcename
                 currentversion.description = version
+
+                if self.targetdistribution[0] not in ['tip','stable']:
+                    currentversion.description += '+' + self.targetdistribution[0]
+                
                 if not currentversion.author:
                     currentversion.author = "%s <%s>" % ( logentry.find("author").text, logentry.find("author").attrib["email"] )                   
                 if not currentversion.date:
