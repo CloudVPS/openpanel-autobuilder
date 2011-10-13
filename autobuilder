@@ -113,7 +113,7 @@ def main():
 
 aliases = {
     'core-deps':        ['grace'],
-    'core':             ['core-deps', 'opencore','opencli','opencore-ssl','openpanel-gui', 'authd','coreval','coreunreg','modules-core'],
+    'core':             ['core-deps', 'opencore','opencli','opencore-ssl','openpanel-gui', 'authd','coreval','coreunreg','modules-core', 'validatepem'],
 
     'modules':          ['modules-core','modules-apache','modules-mail','modules-swup','modules-other'],
 
