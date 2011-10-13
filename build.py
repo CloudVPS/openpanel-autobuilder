@@ -272,25 +272,14 @@ class Build:
             self.dscpath = "%s/%s_%s.dsc" % (self.tmpdir, self.GetSourceName(), self.buildtag)
             
         return self.dscpath
-        
     
     def Build( self, architecture, binary_only=False, repository=None ):
         dscpath = self.BuildSource()
         
         if architecture != 'source':
-            # jikes. I really don't want to do this, but I don't know how to prevent it...
-            # Hopefully, an answer will appear at http://stackoverflow.com/q/4386672/266042
-            c = subprocess.Popen( 
-                    ["pbuilder"] + 
-                    ["update"] +
-                    ["--basetgz", "/var/cache/pbuilder/%s-%s.tgz" % (self.targetdistribution[0],architecture) ] +
-                    ["--bindmounts", "/root/repository"]
-                )
-            c.wait()
-                
+
             if os.path.exists( self.tmpdir + "/results" ):
                 shutil.rmtree( self.tmpdir + "/results" )
-
                 
             os.makedirs(self.tmpdir + "/results")
     
