@@ -76,19 +76,19 @@ def main():
             built.append(package)
             print "### Building package: " + package
     
-            b = Build( "https://hg.openpanel.com/" + package, distributions)
+            for distribution in distributions:
+                b = Build( "https://hg.openpanel.com/" + package, [distribution])
 
-            b.Clone( tip = forcetip )
-            
-            if b.buildtag:
-
-                if package.startswith('openapp/'):
-                    component = 'openapp'
-                else:
-                    component = 'experimental' if (package in aliases['experimental']) else None
+                b.Clone( tip = forcetip )
                 
-                for architecture in architectures:
-                    for distribution in distributions:
+                if b.buildtag:
+
+                    if package.startswith('openapp/'):
+                        component = 'openapp'
+                    else:
+                        component = 'experimental' if (package in aliases['experimental']) else None
+                    
+                    for architecture in architectures:
                         if upone:
                             buildtag = b.GetBuildTag() 
                             buildtagnum = 0
