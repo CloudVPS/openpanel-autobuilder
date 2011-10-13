@@ -80,7 +80,8 @@ def main():
                 b = Build( "https://hg.openpanel.com/" + package, [distribution])
 
                 b.Clone( tip = forcetip )
-                
+                b.GetArchitectures() # make sure it's cached.
+
                 if b.buildtag:
 
                     if package.startswith('openapp/'):
@@ -109,7 +110,6 @@ def main():
                             repository.Include( distribution, changes, component=component )
                 
                 b.CleanUp()
-
 
 aliases = {
     'core-deps':        ['grace'],
