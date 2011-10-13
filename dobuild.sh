@@ -7,7 +7,8 @@ rm -f "${TMPFILE}"
 rm -f "${TMPFILE}.asc"
 rm -f "${TMPFILE}.sig"
 
-./autobuilder all
+./autobuilder all --distribution=lenny
+./autobuilder all --distribution=lucid
 
 for pkg in `rsync -av /root/repository/* root@bob.openpanel.com:/srv/openpanel_repository --exclude "db/" --exclude "conf/" | 
     grep -oe '^pool/.*\.deb' |
