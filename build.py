@@ -271,7 +271,6 @@ class Build:
                 cwd=self.tmpdir + "/" + sourcedir)
                                 
             c.wait()
-            shutil.rmtree( self.tmpdir + "/" + sourcedir )
             
             self.dscpath = "%s/%s_%s.dsc" % (self.tmpdir, self.GetSourceName(), self.buildtag)
             
