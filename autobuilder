@@ -108,7 +108,7 @@ def main():
 
                             repository.Include( distribution, changes, component=component )
                 
-            b.CleanUp()
+                b.CleanUp()
 
 
 aliases = {
