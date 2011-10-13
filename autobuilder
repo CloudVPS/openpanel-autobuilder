@@ -31,7 +31,7 @@ def main():
 
     architectures = []
     repositorypath = "/root/repository"
-    distribution = None
+    distributions = []
     forcetip = False
     upone = False
 
@@ -44,14 +44,14 @@ def main():
         elif o == "--force-tip":
             forcetip = True
         elif o in ("-d","--distribution"):
-            distribution = a
+            distribution.append( a )
         elif o in ("-u","--up-one"):
             upone = True
         else:
             assert False, "unhandled option:"
 
     if not distribution: 
-        distribution = "tip" if forcetip else "stable"
+        distributions = ["lenny"]
     
     # provide a reasonable default for the architectures            
     if not architectures: 
@@ -76,7 +76,7 @@ def main():
             built.append(package)
             print "### Building package: " + package
     
-            b = Build( "https://hg.openpanel.com/" + package, [distribution] + ["squeeze","lenny","maverick","lucid"])
+            b = Build( "https://hg.openpanel.com/" + package, distributions)
 
             b.Clone( tip = forcetip )
             
@@ -88,25 +88,26 @@ def main():
                     component = 'experimental' if (package in aliases['experimental']) else None
                 
                 for architecture in architectures:
-                    if upone:
-                        buildtag = b.GetBuildTag() 
-                        buildtagnum = 0
-                        while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
-                            b.buildtag = buildtag + ( ".%d" % buildtagnum )
-                            buildtagnum += 1
-            
-                    if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
-                        # We dont need noarch if the package has been built for other archs
-                        need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
+                    for distribution in distributions:
+                        if upone:
+                            buildtag = b.GetBuildTag() 
+                            buildtagnum = 0
+                            while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+                                b.buildtag = buildtag + ( ".%d" % buildtagnum )
+                                buildtagnum += 1
+                
+                        if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+                            # We dont need noarch if the package has been built for other archs
+                            need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
 
-                        # For packages with the 'all' architecture, building one package is enough.
-                        if not need_noarch and b.GetArchitectures() == set(['all']): 
-                            continue 
+                            # For packages with the 'all' architecture, building one package is enough.
+                            if not need_noarch and b.GetArchitectures() == set(['all']): 
+                                continue 
 
-                        changes = b.Build( architecture, binary_only = not need_noarch )
+                            changes = b.Build( architecture, binary_only = not need_noarch )
 
-                        repository.Include( distribution, changes, component=component )
-            
+                            repository.Include( distribution, changes, component=component )
+                
             b.CleanUp()
 
 

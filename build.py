@@ -38,7 +38,7 @@ class Build:
 
     def __init__( self, hgurl, targetdistribution ):
         self.hgurl = hgurl
-        if isinstance(targetdistribution,str) or isinstance(targetdistribution,unicode): 
+        if isinstance(targetdistribution,basestring): 
             self.targetdistribution = [targetdistribution]
         else:
             self.targetdistribution = targetdistribution
@@ -85,6 +85,9 @@ class Build:
             while len(split_tag) < 3:
                 split_tag.append("0")
                 lasttag = ".".join(split_tag)
+
+            if self.targetdistribution[0] not in ['tip','stable']:
+                lasttag += '+' + self.targetdistribution[0]
 
             if tip: #checking out the tip version to build
                 subprocess.check_call( ["hg", "update", "--clean"], cwd=hgdir )
