@@ -3,12 +3,12 @@
 # Make a temporary file and try to sign it, so the gpg passphrase lives in the gpg-agent
 TMPFILE=`tempfile`
 gpg --clearsign ${TMPFILE}
-rm -f "${TMPFILE}"
-rm -f "${TMPFILE}.asc"
-rm -f "${TMPFILE}.sig"
+rm -f "${TMPFILE}" "${TMPFILE}.asc" "${TMPFILE}.sig"
 
 ./autobuilder all --distribution=lenny
+./autobuilder all --distribution=squeeze
 ./autobuilder all --distribution=lucid
+./autobuilder all --distribution=natty
 
 for pkg in `rsync -av /root/repository/* root@bob.openpanel.com:/srv/openpanel_repository --exclude "db/" --exclude "conf/" | 
     grep -oe '^pool/.*\.deb' |
