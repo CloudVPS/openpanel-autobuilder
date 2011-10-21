@@ -5,10 +5,10 @@ TMPFILE=`tempfile`
 gpg --clearsign ${TMPFILE}
 rm -f "${TMPFILE}" "${TMPFILE}.asc" "${TMPFILE}.sig"
 
-./autobuilder all --distribution=lenny
-./autobuilder all --distribution=squeeze
-./autobuilder all --distribution=lucid
-./autobuilder all --distribution=natty
+./autobuilder --distribution=lenny   all
+./autobuilder --distribution=squeeze all
+./autobuilder --distribution=lucid   all
+./autobuilder --distribution=natty   all
 
 for pkg in `rsync -av /root/repository/* root@bob.openpanel.com:/srv/openpanel_repository --exclude "db/" --exclude "conf/" | 
     grep -oe '^pool/.*\.deb' |
