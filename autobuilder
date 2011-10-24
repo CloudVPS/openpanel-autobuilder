@@ -83,8 +83,10 @@ def main():
                 b.GetArchitectures() # make sure it's cached.
 
                 if b.buildtag:
-
-                    if package.startswith('openapp/'):
+                    
+                    if forcetip:
+                        component = 'tip'
+                    elif package.startswith('openapp/'):
                         component = 'openapp'
                     else:
                         component = 'experimental' if (package in aliases['experimental']) else None
@@ -93,13 +95,13 @@ def main():
                         if upone:
                             buildtag = b.GetBuildTag() 
                             buildtagnum = 0
-                            while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+                            while repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag(), component=component ):
                                 b.buildtag = buildtag + ( ".%d" % buildtagnum )
                                 buildtagnum += 1
                 
-                        if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag() ):
+                        if upone or not repository.Exists( distribution, architecture, b.GetSourceName(), b.GetBuildTag(), component=component ):
                             # We dont need noarch if the package has been built for other archs
-                            need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag() )
+                            need_noarch = not repository.Exists( distribution, None, b.GetSourceName(), b.GetBuildTag(), component=component )
 
                             # For packages with the 'all' architecture, building one package is enough.
                             if not need_noarch and b.GetArchitectures() == set(['all']): 
@@ -158,7 +160,6 @@ aliases = {
     'all': ['1.0','experimental','openapp'],
 }
 
-    
 if __name__ == "__main__":
     main()
 

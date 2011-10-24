@@ -23,7 +23,7 @@ class AptRepository:
         if c.returncode:
             raise "Process exit with code: %s" % c.returncode
 
-    def Exists( self, distribution, architecture, sourcename, version ):
+    def Exists( self, distribution, architecture, sourcename, version, component=None ):
 
         arch_filter = "Architecture (==%s)," % architecture if architecture else ""
 
@@ -40,7 +40,8 @@ class AptRepository:
             ["reprepro"]  +
             ["--waitforlock", "12"] +
             ["--basedir", self.path] +
-            ( ["-A", architecture] if architecture else [] ) +
+            (["--architecture", architecture] if architecture else []) +
+            (["--component",    component   ] if component    else []) +
             ["listfilter", distribution , pkg_filter ], 
             stdout=subprocess.PIPE)
             

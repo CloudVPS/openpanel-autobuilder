@@ -86,15 +86,12 @@ class Build:
                 split_tag.append("0")
                 lasttag = ".".join(split_tag)
 
-            if self.targetdistribution[0] not in ['tip','stable']:
-                lasttag += '+' + self.targetdistribution[0]
-
             if tip: #checking out the tip version to build
                 subprocess.check_call( ["hg", "update", "--clean"], cwd=hgdir )
-                self.buildtag = lasttag + "." + str(tiprev) + "+tip"
+                self.buildtag = "%s.%i+tip+%s" % (lasttag, tiprev, self.targetdistribution[0])
             elif self.lasttag: # checking out the last tag
                 subprocess.check_call( ["hg", "update", "--clean", self.lasttag], cwd=hgdir )
-                self.buildtag = lasttag
+                self.buildtag = "%s+%s" % (lasttag, self.targetdistribution[0])
             else:
                 self.buildtag = None        
 
