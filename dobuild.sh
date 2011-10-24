@@ -38,7 +38,16 @@ for pkg in `rsync -av /root/repository/* root@bob.openpanel.com:/srv/openpanel_r
     echo -n "OpenPanel Builder just uploaded $pkg" | nc -uq0 krakras.office.xl-is.net 18000
 done
 
-./autobuilder --distribution=lenny --force-tip
+./autobuilder --distribution=lenny   --force-tip all
+./autobuilder --distribution=squeeze --force-tip core modules openapp
+repo_alias squeeze wheezy
+
+./autobuilder --distribution=lucid   --force-tip all
+repo_alias lucid    maverick
+./autobuilder --distribution=natty --force-tip core modules openapp
+repo_alias natty    oneiric
+repo_alias oneiric  precise
+
 rsync -av /root/repository/* 'root@bob.openpanel.com:/srv/openpanel_repository' --exclude "db/" --exclude "conf/" |
     grep -oe '^pool/.*\.deb' | 
     grep "+tip" | 
